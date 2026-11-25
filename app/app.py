@@ -1,5 +1,9 @@
-import sys
+"""
+Streamlit UI for the AI Workflow:
+Review Intelligence -> Weekly Pulse -> Fee Explainer -> MCP approval-gated actions.
+"""
 import os
+import sys
 from datetime import datetime
 
 import streamlit as st
@@ -7,182 +11,90 @@ import streamlit as st
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(BASE_DIR, 'src'))
 
-from generate import Generator
+from workflow_generate import generate_all
+from mcp_actions import build_payload, run_approved_actions, approve, NOTES_DOC, EMAIL_DRAFT, AUDIT_LOG
 
-st.set_page_config(page_title="Groww MF FAQ Assistant", page_icon="💸", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Groww Feedback → Action Workflow", page_icon="🧠", layout="wide")
 
-# Custom CSS for better UI with dark mode support
 st.markdown("""
 <style>
-    /* Light mode */
-    .main {
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    }
-    .stApp {
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    }
-    
-    /* Header */
-    .header-container {
-        background: linear-gradient(90deg, #00d09c 0%, #5367ff 100%);
-        padding: 2rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .header-title {
-        color: white !important;
-        font-size: 2.5rem;
-        font-weight: bold;
-        text-align: center;
-        margin: 0;
-    }
-    .header-subtitle {
-        color: white !important;
-        font-size: 1.2rem;
-        text-align: center;
-        margin-top: 0.5rem;
-        opacity: 0.95;
-    }
-    
-    /* Cards */
-    .example-card {
-        background: white;
-        color: #1f1f1f !important;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid #00d09c;
-        margin: 0.5rem 0;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-    .example-card:hover {
-        transform: translateX(5px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Answer box */
-    .answer-box {
-        background: white;
-        color: #1f1f1f !important;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border: 2px solid #00d09c;
-        margin-top: 1rem;
-        box-shadow: 0 2px 8px rgba(0, 208, 156, 0.1);
-    }
-    
-    /* Disclaimer */
-    .disclaimer {
-        background: #fff3cd;
-        color: #856404 !important;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid #ffc107;
-        margin-top: 2rem;
-    }
-    
-    /* Button */
-    .stButton > button {
-        background: linear-gradient(90deg, #00d09c 0%, #00b386 100%);
-        color: white !important;
-        border: none;
-        border-radius: 25px;
-        padding: 0.5rem 2rem;
-        font-weight: bold;
-    }
-    .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 8px rgba(0, 208, 156, 0.3);
-    }
-    
-    /* Dark mode support */
+    .block { background: #ffffff; color: #1f1f1f; padding: 1.1rem; border-radius: 12px;
+             border-left: 4px solid #00d09c; margin: 0.6rem 0; box-shadow: 0 2px 6px rgba(0,0,0,.05); }
+    .quote { background: #fff8e1; color: #6b5200; padding: .8rem; border-radius: 8px;
+             border-left: 4px solid #ffc107; margin: .4rem 0; }
+    .gate { background: #fff3f3; color: #8a1c1c; padding: 1rem; border-radius: 12px;
+            border: 1px solid #ef9a9a; margin: 1rem 0; }
+    h1, h2, h3 { color: #1f1f1f; }
     @media (prefers-color-scheme: dark) {
-        .main, .stApp {
-            background: linear-gradient(135deg, #0e1117 0%, #1e1e1e 100%) !important;
-        }
-        .example-card, .answer-box {
-            background: #262730 !important;
-            color: #fafafa !important;
-            border-color: #00d09c !important;
-        }
-        .disclaimer {
-            background: #3d341f !important;
-            color: #ffd93d !important;
-        }
-        h1, h2, h3, h4, h5, h6, p, span, label {
-            color: #fafafa !important;
-        }
-        .stTextInput > div > div > input {
-            background-color: #262730 !important;
-            color: #fafafa !important;
-        }
+        .stApp, [data-testid="stAppViewContainer"] { background: #0e1117 !important; }
+        h1,h2,h3,h4,p,li,label,.stMarkdown { color: #f8fafc !important; }
+        .block { background: #1f232b !important; color: #f8fafc !important; }
+        .quote { background: #3d341f !important; color: #ffd93d !important; }
+        .gate { background: #3d1f1f !important; color: #ffb4b4 !important; border-color: #ef9a9a !important; }
+        .stTextInput input { color: #f8fafc !important; background: #1f232b !important; }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Header
-st.markdown("""
-<div class="header-container">
-    <h1 class="header-title">Groww MF FAQ Assistant</h1>
-    <p class="header-subtitle">Factual answers about HDFC Mutual Fund schemes • Official sources only</p>
-</div>
-""", unsafe_allow_html=True)
+st.title("🧠 Groww Feedback → Action Workflow")
+st.caption("Milestone 05 · AI workflow that converts customer reviews into a product pulse + customer clarification, with MCP approval gating.")
 
-# Main content
-tab1, tab2 = st.tabs(["💬 Ask Question", "ℹ️ About"])
+if st.button("▶ Run workflow", type="primary"):
+    with st.spinner("Analyzing reviews..."):
+        st.session_state.output = generate_all()
+    st.success("Workflow complete")
 
-with tab1:
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        st.markdown("### Example Questions")
-        st.markdown("""
-        <div class="example-card"><strong>Expense Ratio</strong> • What is the expense ratio of HDFC Large Cap Fund Direct Growth?</div>
-        <div class="example-card"><strong>ELSS Lock-in</strong> • What is the ELSS lock-in period?</div>
-        <div class="example-card"><strong>Minimum SIP</strong> • What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?</div>
-        <div class="example-card"><strong>Exit Load</strong> • What is the exit load of HDFC Flexi Cap Direct Plan Growth?</div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("### Key Features")
-        st.info("**Scope:** HDFC AMC + 4 schemes\n\n**Constraints:** Public sources only • No PII • No advice")
-        st.success("**Every answer includes:**\n- Exact fact\n- Single source link\n- Timestamp")
-    
-    st.markdown("### Your Question")
-    query = st.text_input("", placeholder="Ask a factual question...", label_visibility="collapsed")
-    
-    if st.button("Get Answer", use_container_width=False):
-        if not query.strip():
-            st.warning("Please enter a question.")
-        else:
-            if 'gen' not in st.session_state:
-                with st.spinner("Loading..."):
-                    st.session_state.gen = Generator()
-            with st.spinner("Searching official sources..."):
-                res = st.session_state.gen.answer(query)
-            if res.get('refused'):
-                st.error(res['answer'])
-                if res.get('source_url'):
-                    st.markdown(f"**Source:** [{res['source_url']}]({res['source_url']})")
+out = st.session_state.get("output")
+
+if out:
+    ins = out['insights']
+    fee = ins['fee_issue']
+
+    t1, t2, t3, t4 = st.tabs(["1 · Review Intelligence", "2 · Weekly Pulse", "3 · Fee Explainer", "4 · MCP Actions"])
+
+    with t1:
+        st.subheader("Review Intelligence Layer")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Reviews analyzed", ins['total_reviews'])
+        c2.metric("Period", "10 weeks")
+        c3.metric("Fee issue mentions", fee['mentions'])
+        st.markdown("**Detected themes (max 5):**")
+        for i, t in enumerate(ins['themes'], 1):
+            st.markdown(f"<div class='block'>{i}. <b>{t['theme']}</b> — {t['count']} reviews ({t['share_pct']}%), avg rating {t['avg_rating']}/5</div>", unsafe_allow_html=True)
+        st.markdown("**Real user quotes:**")
+        for q in ins['quotes']:
+            st.markdown(f"<div class='quote'>“{q['text']}” <br><small>— {q['review_id']}, {q['date']}, {q['rating']}/5</small></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='block'><b>Recurring fee confusion:</b> {fee['label']} ({fee['mentions']} mentions)</div>", unsafe_allow_html=True)
+
+    with t2:
+        st.subheader("Weekly Product Pulse (≤250 words)")
+        st.caption(f"Word count: {len(out['weekly_pulse'].split())}")
+        st.markdown(out['weekly_pulse'])
+        st.download_button("Download pulse (.md)", out['weekly_pulse'], file_name="weekly_product_pulse.md")
+
+    with t3:
+        st.subheader("Fee Explainer (derived from review insights)")
+        st.markdown(out['fee_explainer'])
+        st.download_button("Download explainer (.md)", out['fee_explainer'], file_name="fee_explainer.md")
+
+    with t4:
+        st.subheader("MCP Actions — Approval Gated")
+        st.markdown("<div class='gate'><b>Gate:</b> No document write or email draft is created until you explicitly type <code>APPROVE</code> below.</div>", unsafe_allow_html=True)
+        st.json(build_payload(out))
+        approval = st.text_input("Type APPROVE to allow MCP tools:", placeholder="APPROVE")
+        if st.button("Execute MCP actions", type="primary"):
+            result = run_approved_actions(out, approval)
+            if result['status'] == 'blocked':
+                st.error(result['message'])
             else:
-                st.markdown(f"""
-                <div class="answer-box">
-                    <p style="font-size: 1.05rem; margin: 0; line-height: 1.6;">{res['answer'].replace(chr(10), '<br>')}</p>
-                </div>
-                """, unsafe_allow_html=True)
-            st.caption(f"Last updated from sources: {datetime.now().strftime('%Y-%m-%d')}")
-
-with tab2:
-    st.markdown("### About This Assistant")
-    st.write("This is a RAG-based FAQ assistant built for HDFC Mutual Fund schemes. It answers only factual questions using official public pages from Groww.")
-    st.markdown("### Data Sources")
-    st.write("- HDFC Mutual Fund AMC Overview\n- HDFC Large Cap Fund Direct Growth\n- HDFC Flexi Cap Direct Plan Growth\n- HDFC ELSS Tax Saver Fund Direct Plan Growth\n- HDFC Mid Cap Fund Direct Growth")
-    st.markdown("### Disclaimer")
-    st.markdown("""
-    <div class="disclaimer">
-        <strong>Facts-only. No investment advice.</strong><br>
-        No PII collected or stored. No performance claims or comparisons. Every answer cites official sources.
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("---")
-st.markdown("<center><small>Powered by RAG • ChromaDB • Sentence Transformers • Groq</small></center>", unsafe_allow_html=True)
+                st.success("✅ Approved — both MCP tools executed")
+                st.markdown(f"- Appended to doc: `{result['notes_doc']}`")
+                st.markdown(f"- Email draft created: `{result['email_draft']}`")
+                st.markdown(f"- Subject: **{result['subject']}**")
+                with st.expander("Preview email draft"):
+                    st.text(result['body'])
+                if os.path.exists(AUDIT_LOG):
+                    with st.expander("Audit log"):
+                        st.text(open(AUDIT_LOG, encoding='utf-8').read())
+else:
+    st.info("Click **Run workflow** to analyze reviews and generate outputs.")

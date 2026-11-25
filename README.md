@@ -28,7 +28,8 @@ Reviews CSV → Review Intelligence → Weekly Product Pulse
 
 | File | Description |
 |---|---|
-| `app/workflow_app.py` | Streamlit prototype (4 tabs: Intelligence, Pulse, Explainer, MCP) |
+| `app/app.py` | Streamlit prototype (4 tabs: Intelligence, Pulse, Explainer, MCP) — default entrypoint |
+| `app/workflow_app.py` | Same workflow (alternate entrypoint) |
 | `src/review_intelligence.py` | Step 1 — clustering, quotes, fee detection |
 | `src/workflow_generate.py` | Steps 2 & 3 — pulse + explainer generation (Groq with local fallback) |
 | `src/mcp_actions.py` | Approval-gated MCP tools + audit log |
@@ -38,7 +39,7 @@ Reviews CSV → Review Intelligence → Weekly Product Pulse
 | `output/notes_doc.md` | Notes/Doc showing appended entry (after approval) |
 | `output/email_draft.txt` | Email draft text (draft only, never sent) |
 | `output/source_list.md` | 6 official source URLs |
-| `app/app.py` + `src/` | Milestone 4 RAG FAQ assistant (base product) |
+| `app/faq_app.py` + `src/` | Milestone 4 RAG FAQ assistant (base product) |
 
 ---
 
@@ -54,11 +55,14 @@ pip install -r requirements.txt
 cp .env.example .env
 # edit .env -> GROQ_API_KEY=your_key
 
-# 3. Launch the workflow prototype
+# 3. Launch the workflow prototype (default entrypoint)
+streamlit run app/app.py
+
+# Alternative entrypoint (same workflow):
 streamlit run app/workflow_app.py
 
 # To run the Milestone 4 FAQ assistant:
-streamlit run app/app.py
+streamlit run app/faq_app.py
 ```
 
 **To generate static outputs without the UI:**
@@ -70,7 +74,7 @@ python -c "import sys; sys.path.insert(0,'src'); from workflow_generate import g
 
 ## Where MCP approval happens
 
-In `app/workflow_app.py` → tab **4 · MCP Actions**:
+In `app/app.py` → tab **4 · MCP Actions**:
 
 - The exact append payload (date, top_themes, weekly_pulse, identified_fee_issue, explanation_bullets, source_links) is displayed as JSON.
 - A text input requires the user to type **`APPROVE`**.
