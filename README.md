@@ -1,140 +1,104 @@
-# Groww MF FAQ Assistant (RAG-based)
+# Groww AI Workflow — Feedback → Product Pulse → Customer Clarification
 
-A facts-only Retrieval Augmented Generation (RAG) assistant that answers questions about HDFC Mutual Fund schemes using only official public Groww pages. 
+**Milestone 05 (AI Workflows)** built on top of the **Milestone 04 RAG FAQ assistant** (Groww Mutual Funds). This workflow transforms raw customer reviews into a structured internal update and a ready-to-use customer communication, with an **MCP-style approval gate** before any action is taken.
 
-## Features
-- **Facts-only**: Answers only factual questions (no investment advice, recommendations, opinions, or performance claims)
-- **Exact citations**: Every answer includes exactly one source link
-- **Guardrails**: Refuses advice, PII, comparisons, performance claims
-- **RAG Pipeline**: Data loading → Parsing/Cleaning → Section-aware Chunking → Embeddings (`sentence-transformers/all-MiniLM-L6-v2`) → ChromaDB → Retrieval → Generation
-- **Multi-provider support**: Groq (default: `qwen/qwen3.8-27b`) via `.env`/Streamlit secrets
-- **Clean UI**: Streamlit app with tabs, cards, and dark/system mode support
+---
 
-## Data Sources (Official Public Pages)
-The assistant uses only these 5 official public Groww pages:
+## What this workflow does
 
-1. [HDFC Mutual Fund - AMC Overview](https://groww.in/mutual-funds/amc/hdfc-mutual-funds)
-2. [HDFC Large Cap Fund Direct Growth](https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth)
-3. [HDFC Flexi Cap Direct Plan Growth](https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth)
-4. [HDFC ELSS Tax Saver Fund Direct Plan Growth](https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth)
-5. [HDFC Mid Cap Fund Direct Growth](https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth)
+```
+Reviews CSV → Review Intelligence → Weekly Product Pulse
+                                ↘ Fee Explainer (from detected confusion)
+                                          → ⛔ APPROVAL GATE
+                                                 → Append to Notes Doc
+                                                 → Create Email Draft (no auto-send)
+```
 
-## Sample Q&A
-| Question | Answer | Source |
-|---|---|---|
-| What is the expense ratio of HDFC Large Cap Fund Direct Growth? | The expense ratio of HDFC Large Cap Fund Direct Growth is 1.02%. | [Source](https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth) |
-| What is the expense ratio of HDFC Mid Cap Fund Direct Growth? | The expense ratio of HDFC Mid Cap Fund Direct Growth is 1.05%. | [Source](https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth) |
-| What is the expense ratio of HDFC Flexi Cap Direct Plan Growth? | The expense ratio of HDFC Flexi Cap Fund Direct Plan Growth is 1.07%. | [Source](https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth) |
-| What is the ELSS lock-in period? | The ELSS lock-in period is 3 years. | [Source](https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth) |
-| What is the minimum SIP for HDFC Large Cap Fund Direct Growth? | The minimum SIP for HDFC Large Cap Fund Direct Growth is ₹100. | [Source](# PR Title
-diff --git a/README.md b/README.md
-new file mode 100644
-index 0000000..bf7f0df
---- /dev/null
-+++ b/README.md
-@@ -0,0 +1,113 @@
-+# Groww MF FAQ Assistant (RAG-based)
-+
-+A facts-only Retrieval Augmented Generation (RAG) assistant that answers questions about HDFC Mutual Fund schemes using only official public Groww pages. 
-+
-+## Features
-+- **Facts-only**: Answers only factual questions (no investment advice, recommendations, opinions, or performance claims)
-+- **Exact citations**: Every answer includes exactly one source link
-+- **Guardrails**: Refuses advice, PII, comparisons, performance claims
-+- **RAG Pipeline**: Data loading → Parsing/Cleaning → Section-aware Chunking → Embeddings (`sentence-transformers/all-MiniLM-L6-v2`) → ChromaDB → Retrieval → Generation
-+- **Multi-provider support**: Groq (default: `qwen/qwen3.8-27b`) via `.env`/Streamlit secrets
-+- **Clean UI**: Streamlit app with tabs, cards, and dark/system mode support
-+
-+## Data Sources (Official Public Pages)
-+The assistant uses only these 5 official public Groww pages:
-+
-+1. [HDFC Mutual Fund - AMC Overview](https://groww.in/mutual-funds/amc/hdfc-mutual-funds)
-+2. [HDFC Large Cap Fund Direct Growth](https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth)
-+3. [HDFC Flexi Cap Direct Plan Growth](https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth)
-+4. [HDFC ELSS Tax Saver Fund Direct Plan Growth](https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth)
-+5. [HDFC Mid Cap Fund Direct Growth](https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth)
-+
-+## Sample Q&A
-+| Question | Answer | Source |
-+|---|---|---|
-+| What is the expense ratio of HDFC Large Cap Fund Direct Growth? | The expense ratio of HDFC Large Cap Fund Direct Growth is 1.02%. | [Source](https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth) |
-+| What is the expense ratio of HDFC Mid Cap Fund Direct Growth? | The expense ratio of HDFC Mid Cap Fund Direct Growth is 1.05%. | [Source](https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth) |
-+| What is the expense ratio of HDFC Flexi Cap Direct Plan Growth? | The expense ratio of HDFC Flexi Cap Fund Direct Plan Growth is 1.07%. | [Source](https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth) |
-+| What is the ELSS lock-in period? | The ELSS lock-in period is 3 years. | [Source](https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth) |
-+| What is the minimum SIP for HDFC Large Cap Fund Direct Growth? | The minimum SIP for HDFC Large Cap Fund Direct Growth is ₹100. | [Source](https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth) |
-+| What is the exit load of HDFC Large Cap Fund Direct Growth? | The exit load for HDFC Large Cap Fund Direct Growth is 1% if redeemed within 1 year. | [Source](https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth) |
-+
-+## Setup & Installation
-+
-+### Prerequisites
-+- Python 3.10+
-+- [Groq API key](https://console.groq.com/keys) (or configure your preferred provider)
-+
-+### Local Setup
-+1. Clone the repository
-+```bash
-+git clone https://github.com/AkshayAdmin13/Groww_chatBot.git
-+cd Groww_chatBot
-+```
-+
-+2. Create virtual environment and install dependencies
-+```bash
-+pip install -r requirements.txt
-+```
-+
-+3. Create `.env` file
-+```env
-+GROQ_API_KEY=your_groq_api_key_here
-+```
-+
-+4. Run the Streamlit app
-+```bash
-+streamlit run app/app.py
-+```
-+
-+## Project Structure
-+```
-+groww_chatbot/
-+├── app/                # Streamlit UI
-+├── config/             # Configuration files
-+├── data/               # Raw data, chunks, embeddings, vectorstore
-+├── src/                # Core modules (load, parse, chunk, embed, index, retrieve, generate, guardrails)
-+├── scripts/            # Utility scripts
-+├── requirements.txt    # Dependencies
-+└── README.md
-+```
-+
-+## Usage
-+Ask factual questions like:
-+- "What is the expense ratio of HDFC Large Cap Fund Direct Growth?"
-+- "What is the ELSS lock-in period?"
-+- "What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?"
-+- "What is the exit load of HDFC Flexi Cap Direct Plan Growth?"
-+
-+## Disclaimer
-+**This is a facts-only assistant. No investment advice provided.**
-+
-+- Answers are based solely on the official public pages listed above
-+- No personal information is collected or stored
-+- No performance claims, comparisons, or recommendations are made
-+- The assistant may refuse questions that ask for advice, opinions, PII, or non-factual information
-+- Always refer to the official scheme documents for the most up-to-date information
-+
-+## Tech Stack
-+- **Frontend**: [Streamlit](https://streamlit.io/)
-+- **LLM**: [Groq](https://console.groq.com/) with `qwen/qwen3.8-27b`
-+- **Embeddings**: [sentence-transformers/all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
-+- **Vector Store**: [ChromaDB](https://www.trychroma.com/)
-+- **Parsing**: BeautifulSoup
-+
-+## Deployment
-+This app is deployed on [Streamlit Community Cloud](https://share.streamlit.io/). For deployment:
-+1. Push code to GitHub
-+2. Create app from repo with `app/app.py` as main file
-+3. Add `GROQ_API_KEY` to Streamlit Secrets
-+
-+## Contributing
-+Feel free to open issues or submit pull requests for improvements.
-+
-+## License
-+This project is for educational purposes.
+1. **Review Intelligence** — clusters 30 public reviews (10 weeks) into max 5 themes, surfaces top 3 themes and 3 real quotes, and detects one recurring fee confusion.
+2. **Weekly Product Pulse** — ≤250-word structured internal note (themes, quotes, key observation, 3 action ideas).
+3. **Fee Explainer** — ≤6 bullet, facts-only explanation with 2 official source links and `Last checked:`.
+4. **MCP Actions (approval-gated)** — appends to a notes doc and creates an email draft, only after explicit user approval.
+
+### Fee issue identified from reviews
+**Exit load (1% if redeemed within 1 year)** — mentioned in **12 of 30 reviews**, with users frequently describing it as unexpected or unclear at redemption time (e.g. “The exit load FAQ says 1% within 1 year but I redeemed on day 364. Still charged.”). The explainer directly addresses this confusion.
+
+---
+
+## Deliverables / files
+
+| File | Description |
+|---|---|
+| `app/workflow_app.py` | Streamlit prototype (4 tabs: Intelligence, Pulse, Explainer, MCP) |
+| `src/review_intelligence.py` | Step 1 — clustering, quotes, fee detection |
+| `src/workflow_generate.py` | Steps 2 & 3 — pulse + explainer generation (Groq with local fallback) |
+| `src/mcp_actions.py` | Approval-gated MCP tools + audit log |
+| `data/reviews/customer_reviews.csv` | 30 public reviews over 10 weeks (sample) |
+| `output/weekly_product_pulse.md` | Generated weekly pulse |
+| `output/fee_explainer.md` | Generated fee explainer |
+| `output/notes_doc.md` | Notes/Doc showing appended entry (after approval) |
+| `output/email_draft.txt` | Email draft text (draft only, never sent) |
+| `output/source_list.md` | 6 official source URLs |
+| `app/app.py` + `src/` | Milestone 4 RAG FAQ assistant (base product) |
+
+---
+
+## How to run
+
+```bash
+# 1. Clone and install
+git clone https://github.com/AkshayAdmin13/Groww_chatBot_AI_workflow.git
+cd Groww_chatBot_AI_workflow
+pip install -r requirements.txt
+
+# 2. (Optional) add Groq key for LLM-generated wording
+cp .env.example .env
+# edit .env -> GROQ_API_KEY=your_key
+
+# 3. Launch the workflow prototype
+streamlit run app/workflow_app.py
+
+# To run the Milestone 4 FAQ assistant:
+streamlit run app/app.py
+```
+
+**To generate static outputs without the UI:**
+```bash
+python -c "import sys; sys.path.insert(0,'src'); from workflow_generate import generate_all; print(generate_all()['weekly_pulse'])"
+```
+
+---
+
+## Where MCP approval happens
+
+In `app/workflow_app.py` → tab **4 · MCP Actions**:
+
+- The exact append payload (date, top_themes, weekly_pulse, identified_fee_issue, explanation_bullets, source_links) is displayed as JSON.
+- A text input requires the user to type **`APPROVE`**.
+- `src/mcp_actions.py::approve()` checks this; if it is not `APPROVE`, **no tool is called** and the audit log records `blocked_no_approval`.
+- Only after approval do the two simulated MCP tools run:
+  1. `append_to_notes_doc()` → writes `output/notes_doc.md`
+  2. `create_email_draft()` → writes `output/email_draft.txt` (marked **DRAFT ONLY — NOT SENT**)
+- Every action is recorded in `output/mcp_audit_log.jsonl`.
+
+CLI equivalent:
+```python
+from mcp_actions import run_approved_actions
+result = run_approved_actions(output, "APPROVE")  # anything else is blocked
+```
+
+---
+
+## Source list (official)
+
+1. https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth
+2. https://groww.in/mutual-funds/amc/hdfc-mutual-funds
+3. https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth
+4. https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth
+5. https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth
+6. https://www.amfiindia.com/investor-corner/knowledge-center
+
+---
+
+## Disclaimer
+
+This is a simulated internal product + support workflow for demonstration purposes. Review data is illustrative. Fee explanations are facts-only and based on official public pages; no investment advice, recommendations, or performance claims are made. The email step never sends messages — it only creates a draft. No personal information is collected.
